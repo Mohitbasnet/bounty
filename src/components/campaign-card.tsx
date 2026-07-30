@@ -1,13 +1,16 @@
 import {
   ArrowUpRight,
-  CircleDollarSign,
   Clock3,
   Eye,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 
-import type { Campaign } from "@/lib/data";
+import {
+  getCampaignAvailable,
+  getRatePerThousand,
+  type Campaign,
+} from "@/lib/data";
 
 const statusLabels: Record<Campaign["status"], string> = {
   live: "Live",
@@ -16,6 +19,12 @@ const statusLabels: Record<Campaign["status"], string> = {
 };
 
 export function CampaignCard({ campaign }: { campaign: Campaign }) {
+  const available = getCampaignAvailable(campaign);
+  const committedPercent = Math.min(
+    ((campaign.paidOut + campaign.reserved) / campaign.rewardPool) * 100,
+    100,
+  );
+
   return (
     <article className="campaign-card">
       <div className={`campaign-card-top accent-${campaign.accent}`}>
@@ -35,37 +44,34 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
           <span>{campaign.category}</span>
           <span>{campaign.platform}</span>
         </div>
-        <div className="campaign-rule">
+        <div className="campaign-rule campaign-rate-rule">
           <div>
-            <span>Eligibility unlock</span>
+            <span>Verified-view rate</span>
             <strong>
               <Eye size={14} aria-hidden />
-              {campaign.unlockViews.toLocaleString()} views
+              ${getRatePerThousand(campaign).toFixed(2)} / 1K views
             </strong>
           </div>
           <div>
-            <span>Performance rate</span>
-            <strong>
-              ${campaign.rewardPerBlock.toFixed(2)} /{" "}
-              {campaign.viewsPerBlock} views
-            </strong>
+            <span>Unlock</span>
+            <strong>{campaign.unlockViews.toLocaleString()} views</strong>
           </div>
         </div>
-        <div className="campaign-funding">
-          <span>
-            <CircleDollarSign size={14} aria-hidden />
-            ${campaign.rewardPool.toLocaleString()} funded pool
+        <div className="pool-progress">
+          <div>
+            <span>${available.toLocaleString()} available</span>
+            <span>${campaign.rewardPool.toLocaleString()} pool</span>
+          </div>
+          <span className="pool-progress-track" aria-hidden>
+            <span style={{ width: `${committedPercent}%` }} />
           </span>
-          <span>Up to ${campaign.maxPerCreator} per creator</span>
         </div>
         <div className="campaign-card-footer">
           <div className="campaign-meta">
             <span>
               <Clock3 size={14} aria-hidden /> {campaign.daysLeft}d left
             </span>
-            <span>
-              <UsersRound size={14} aria-hidden /> {campaign.submissions}
-            </span>
+            <span><UsersRound size={14} aria-hidden /> {campaign.submissions} posts</span>
           </div>
           <Link
             className="card-link focus-ring"

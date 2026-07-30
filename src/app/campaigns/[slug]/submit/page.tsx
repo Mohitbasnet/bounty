@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { SubmissionForm } from "@/components/submission-form";
-import { getCampaign } from "@/lib/data";
+import { getLiveCampaign } from "@/lib/campaign-store";
 
 export default async function SubmitPage({
   params,
@@ -9,7 +9,7 @@ export default async function SubmitPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const campaign = getCampaign(slug);
+  const campaign = getLiveCampaign(slug);
 
   if (!campaign) notFound();
 

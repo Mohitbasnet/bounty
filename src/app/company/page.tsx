@@ -9,21 +9,33 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-import { campaigns } from "@/lib/data";
+import { CampaignCloseButton } from "@/components/campaign-close-button";
+import { getLiveCampaigns } from "@/lib/campaign-store";
+
+export const dynamic = "force-dynamic";
 
 export default function CompanyDashboardPage() {
+  const campaigns = getLiveCampaigns();
+  const totalBudget = campaigns.reduce(
+    (sum, campaign) => sum + campaign.rewardPool,
+    0,
+  );
+  const totalSubmissions = campaigns.reduce(
+    (sum, campaign) => sum + campaign.submissions,
+    0,
+  );
   return (
     <main className="dashboard-page">
       <div className="dashboard-wrap">
         <div className="dashboard-heading">
           <div>
-            <span className="section-kicker">MagicBlock workspace</span>
-            <h1>Performance campaigns</h1>
-            <p>Fund work, monitor results, and control final settlement.</p>
+            <span className="section-kicker">Company workspace</span>
+            <h1>Creator campaigns</h1>
+            <p>Fund verified X reach, approve posts, and monitor public USDC payouts.</p>
           </div>
           <Link
             className="primary-button focus-ring"
-            href="/company/campaigns/new"
+            href="/campaigns/new"
           >
             <Plus size={17} aria-hidden />
             Create campaign
@@ -36,15 +48,15 @@ export default function CompanyDashboardPage() {
               <Radio size={16} aria-hidden />
               Active campaigns
             </span>
-            <strong>2</strong>
-            <small>1 ending this week</small>
+            <strong>{campaigns.length}</strong>
+            <small>Funded and accepting submissions</small>
           </div>
           <div>
             <span>
               <CircleDollarSign size={16} aria-hidden />
-              Funded treasury
+              Campaign treasuries
             </span>
-            <strong>$7,500</strong>
+            <strong>${totalBudget.toLocaleString()}</strong>
             <small>USDC reserved</small>
           </div>
           <div>
@@ -52,16 +64,16 @@ export default function CompanyDashboardPage() {
               <UsersRound size={16} aria-hidden />
               Active creators
             </span>
-            <strong>44</strong>
-            <small>Across all campaigns</small>
+            <strong>{totalSubmissions}</strong>
+            <small>Submitted posts</small>
           </div>
           <div>
             <span>
               <FileCheck2 size={16} aria-hidden />
-              Needs review
+              Awaiting approval
             </span>
-            <strong>8</strong>
-            <small>Ownership or fraud checks</small>
+            <strong>{totalSubmissions}</strong>
+            <small>Review in submissions workspace</small>
           </div>
         </section>
 
@@ -69,7 +81,7 @@ export default function CompanyDashboardPage() {
           <div className="company-panel-heading">
             <div>
               <h2>Your campaigns</h2>
-              <p>Budget, performance, and settlement health.</p>
+              <p>Pool usage, verified reach, and settlement health.</p>
             </div>
             <Link className="text-link focus-ring" href="/company/submissions">
               Review submissions <ArrowRight size={15} aria-hidden />
@@ -85,7 +97,7 @@ export default function CompanyDashboardPage() {
               <span role="columnheader">Status</span>
               <span aria-hidden />
             </div>
-            {campaigns.slice(0, 2).map((campaign, index) => (
+            {campaigns.map((campaign) => (
               <div className="campaign-table-row" role="row" key={campaign.slug}>
                 <div className="table-campaign" role="cell">
                   <span className={`mini-mark accent-${campaign.accent}`}>
@@ -99,10 +111,10 @@ export default function CompanyDashboardPage() {
                 <span role="cell">{campaign.submissions}</span>
                 <span className="metric-text" role="cell">
                   <Eye size={14} aria-hidden />
-                  {index === 0 ? "184.2K" : "72.8K"}
+                  Awaiting sync
                 </span>
                 <span className="metric-text" role="cell">
-                  ${index === 0 ? "368.40" : "122.00"}
+                  ${campaign.paidOut.toFixed(2)}
                 </span>
                 <span className="metric-text" role="cell">
                   ${campaign.rewardPool.toLocaleString()}
@@ -113,13 +125,19 @@ export default function CompanyDashboardPage() {
                     Live
                   </span>
                 </span>
-                <Link
-                  className="card-link focus-ring"
-                  href="/company/submissions"
-                  aria-label={`Open ${campaign.title}`}
-                >
-                  <ArrowRight size={17} aria-hidden />
-                </Link>
+                <span className="review-summary">
+                  <Link
+                    className="card-link focus-ring"
+                    href="/company/submissions"
+                    aria-label={`Open ${campaign.title}`}
+                  >
+                    <ArrowRight size={17} aria-hidden />
+                  </Link>
+                  <CampaignCloseButton
+                    campaignId={campaign.id}
+                    title={campaign.title}
+                  />
+                </span>
               </div>
             ))}
           </div>

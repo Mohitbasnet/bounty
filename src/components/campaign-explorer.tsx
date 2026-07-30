@@ -1,59 +1,64 @@
 "use client";
 
-import { Search, Sparkles } from "lucide-react";
+import { Search } from "lucide-react";
 import { useState } from "react";
 
 import { CampaignCard } from "@/components/campaign-card";
 import { useProfile } from "@/components/profile-context";
 import type { Campaign } from "@/lib/data";
 
-type DiscoveryTab = "All campaigns" | "For you" | "Ending soon";
+type DiscoveryTab = "Active" | "Ending soon" | "All";
 
-const categories = ["Writing", "Video", "Visuals"];
+const categories = ["All formats", "Thread", "Video", "Visual"];
 
 export function CampaignExplorer({ campaigns }: { campaigns: Campaign[] }) {
-  const { profile, openOnboarding } = useProfile();
-  const [tab, setTab] = useState<DiscoveryTab>("All campaigns");
-  const [category, setCategory] = useState("All campaigns");
+  const { profile } = useProfile();
+  const [tab, setTab] = useState<DiscoveryTab>("Active");
+  const [category, setCategory] = useState("All formats");
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState("newest");
 
-  const visibleCampaigns = campaigns
+  const visibleCampaigns = [...campaigns]
     .filter((campaign) => {
       if (tab === "Ending soon") return campaign.daysLeft <= 3;
-      if (tab === "For you" && profile?.mode === "creator") {
-        return campaign.category === profile.focus || campaign.featured;
-      }
+      if (tab === "Active") return campaign.status !== "upcoming";
       return true;
     })
     .filter((campaign) =>
-      category === "All campaigns" ? true : campaign.category === category,
+      category === "All formats" ? true : campaign.category === category,
     )
-    .slice(0, 3);
-
-  function selectTab(nextTab: DiscoveryTab) {
-    if (nextTab === "For you" && (!profile || profile.mode !== "creator")) {
-      openOnboarding();
-      return;
-    }
-    if (nextTab === "All campaigns") setCategory("All campaigns");
-    setTab(nextTab);
-  }
+    .filter((campaign) => {
+      const searchable =
+        `${campaign.title} ${campaign.company} ${campaign.description}`.toLowerCase();
+      return searchable.includes(query.trim().toLowerCase());
+    })
+    .sort((a, b) => {
+      if (sort === "rate") {
+        return (
+          b.rewardPerBlock / b.viewsPerBlock -
+          a.rewardPerBlock / a.viewsPerBlock
+        );
+      }
+      if (sort === "budget") return b.rewardPool - a.rewardPool;
+      return a.daysLeft - b.daysLeft;
+    });
 
   return (
     <section className="market-section" id="campaigns">
       <div className="section-heading">
         <div>
-          <span className="section-kicker">Open now</span>
-          <h2>Campaigns worth making for.</h2>
+          <span className="section-kicker">Live campaigns</span>
+          <h2>Pick a brief. Earn by the view.</h2>
         </div>
         <p>
-          The pool is funded upfront. Your payout grows from verified
-          performance, not a fixed winner prize.
+          Every campaign shows its funded USDC pool, verified-view rate, unlock,
+          creator cap, and tracking window before you post.
         </p>
       </div>
 
       <div className="campaign-toolbar">
         <div className="browse-tabs" aria-label="Campaign views">
-          {(["All campaigns", "For you", "Ending soon"] as DiscoveryTab[]).map(
+          {(["Active", "Ending soon", "All"] as DiscoveryTab[]).map(
             (item) => (
               <button
                 aria-pressed={tab === item}
@@ -62,14 +67,41 @@ export function CampaignExplorer({ campaigns }: { campaigns: Campaign[] }) {
                 }`}
                 key={item}
                 type="button"
-                onClick={() => selectTab(item)}
+                onClick={() => setTab(item)}
               >
-                {item === "For you" && <Sparkles size={13} aria-hidden />}
                 {item}
               </button>
             ),
           )}
         </div>
+        {profile?.mode === "creator" && (
+          <span className="feed-context">
+            Your focus: {profile.focus}
+          </span>
+        )}
+      </div>
+
+      <div className="campaign-search-row">
+        <label className="campaign-search" htmlFor="campaign-search">
+          <Search size={17} aria-hidden />
+          <span className="sr-only">Search campaigns</span>
+          <input
+            autoComplete="off"
+            id="campaign-search"
+            placeholder="Search campaign or project"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
+        <label className="campaign-sort">
+          <span className="sr-only">Sort campaigns</span>
+          <select value={sort} onChange={(event) => setSort(event.target.value)}>
+            <option value="newest">Ending soonest</option>
+            <option value="rate">Highest rate</option>
+            <option value="budget">Biggest pool</option>
+          </select>
+        </label>
         <div className="filter-row" aria-label="Campaign categories">
           {categories.map((item) => (
             <button
@@ -102,8 +134,9 @@ export function CampaignExplorer({ campaigns }: { campaigns: Campaign[] }) {
             className="secondary-button focus-ring"
             type="button"
             onClick={() => {
-              setCategory("All campaigns");
-              setTab("All campaigns");
+              setCategory("All formats");
+              setTab("All");
+              setQuery("");
             }}
           >
             Show all campaigns

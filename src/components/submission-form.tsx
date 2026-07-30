@@ -6,39 +6,66 @@ import {
   Check,
   CircleCheck,
   LoaderCircle,
-  ShieldCheck,
 } from "lucide-react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import bs58 from "bs58";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 
+import { readApiResponse } from "@/lib/api";
 import type { Campaign } from "@/lib/data";
+import { buildActionMessage } from "@/lib/messages";
+import { XAccountButton } from "@/components/x-account-button";
 
-type FormState = "idle" | "verifying" | "ready" | "submitting" | "success";
+type FormState = "idle" | "submitting" | "success";
 
 export function SubmissionForm({ campaign }: { campaign: Campaign }) {
+  const { publicKey, signMessage } = useWallet();
   const [state, setState] = useState<FormState>("idle");
   const [postUrl, setPostUrl] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
 
-  function verifyPost() {
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setError("");
     if (!/^https:\/\/(x\.com|twitter\.com)\/.+\/status\/\d+/i.test(postUrl)) {
       setError("Enter a valid public X post URL.");
       return;
     }
-    setState("verifying");
-    window.setTimeout(() => setState("ready"), 850);
-  }
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (state !== "ready") {
-      setError("Verify the X post before submitting.");
+    if (!publicKey || !signMessage) {
+      setError("Connect a wallet that supports message signing first.");
       return;
     }
-    setState("submitting");
-    window.setTimeout(() => setState("success"), 900);
+    try {
+      setState("submitting");
+      const submissionPayload = {
+        campaignSlug: campaign.slug,
+        postUrl,
+        note,
+      };
+      const message = buildActionMessage({
+        action: "submission.create",
+        wallet: publicKey.toBase58(),
+        payload: submissionPayload,
+      });
+      const signature = await signMessage(new TextEncoder().encode(message));
+      const response = await fetch("/api/submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wallet: publicKey.toBase58(),
+          message,
+          signature: bs58.encode(signature),
+          submission: submissionPayload,
+        }),
+      });
+      await readApiResponse(response);
+      setState("success");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Submission failed.");
+      setState("idle");
+    }
   }
 
   if (state === "success") {
@@ -51,21 +78,21 @@ export function SubmissionForm({ campaign }: { campaign: Campaign }) {
           <span className="section-kicker">Submission received</span>
           <h1>Your post is in the tracking queue.</h1>
           <p>
-            We verified the post owner and saved the first metrics snapshot.
-            Tracking begins now; earnings unlock after{" "}
-            {campaign.unlockViews.toLocaleString()} verified views.
+            Your wallet-authorized submission was sent to {campaign.company}.
+            X ownership and metrics remain pending until the official X API
+            confirms them; tracking starts only after company approval.
           </p>
           <div className="success-timeline">
             <div className="timeline-done">
               <Check size={14} aria-hidden />
-              Post ownership verified
+              Wallet ownership verified
             </div>
             <div className="timeline-active">
               <LoaderCircle size={14} aria-hidden />
-              Gathering performance snapshots
+              Waiting for company approval
             </div>
-            <div>48-hour validation after campaign close</div>
-            <div>Available for private USDC withdrawal</div>
+            <div>Official X ownership and metrics after approval</div>
+            <div>Finalized USDC enters the next public settlement batch</div>
           </div>
           <Link className="primary-button focus-ring" href="/dashboard">
             View live earnings <ArrowRight size={17} aria-hidden />
@@ -90,8 +117,8 @@ export function SubmissionForm({ campaign }: { campaign: Campaign }) {
             <span className="section-kicker">Submit your work</span>
             <h1>{campaign.title}</h1>
             <p>
-              Submit the public post you want us to track. We verify ownership
-              before the campaign starts accruing earnings.
+              Submit the public X post you want tracked. We verify ownership,
+              then {campaign.company} reviews it before earnings can accrue.
             </p>
             <div className="form-rule-card">
               <div>
@@ -99,10 +126,14 @@ export function SubmissionForm({ campaign }: { campaign: Campaign }) {
                 <strong>{campaign.unlockViews.toLocaleString()} views</strong>
               </div>
               <div>
-                <span>Accrual</span>
+                <span>Rate</span>
                 <strong>
-                  ${campaign.rewardPerBlock.toFixed(2)} every{" "}
-                  {campaign.viewsPerBlock}
+                  $
+                  {(
+                    (campaign.rewardPerBlock / campaign.viewsPerBlock) *
+                    1000
+                  ).toFixed(2)}{" "}
+                  per 1K views
                 </strong>
               </div>
               <div>
@@ -114,66 +145,52 @@ export function SubmissionForm({ campaign }: { campaign: Campaign }) {
 
           <form className="submission-form" onSubmit={submit}>
             <div className="submission-form-head">
-              <span className="section-kicker">Content submission</span>
-              <h2>Share the post you want tracked.</h2>
+              <span className="section-kicker">X post submission</span>
+              <h2>Share the post you want approved.</h2>
               <p>
                 You can edit this submission until the campaign deadline.
               </p>
             </div>
+            <div className="field-group">
+              <label>Creator identity</label>
+              <p className="field-hint">
+                Connect the X account that published the post. FlowEarn compares
+                its official X user ID before any earnings can accrue.
+              </p>
+              <XAccountButton
+                returnTo={`/campaigns/${campaign.slug}/submit`}
+              />
+            </div>
+            <div className="form-divider" />
             <div className="field-group">
               <label htmlFor="post-url">Link to your X content*</label>
               <p className="field-hint">
                 Use the public post URL from the X account connected to your
                 profile.
               </p>
-              <div className="verify-field">
-                <input
-                  id="post-url"
-                  type="url"
-                  inputMode="url"
-                  autoComplete="url"
-                  placeholder="https://x.com/yourname/status/..."
-                  value={postUrl}
-                  aria-invalid={Boolean(error)}
-                  aria-describedby={error ? "post-url-error" : undefined}
-                  onChange={(event) => {
-                    setPostUrl(event.target.value);
-                    setState("idle");
-                    setError("");
-                  }}
-                />
-                <button
-                  className="verify-button focus-ring"
-                  type="button"
-                  disabled={state === "verifying"}
-                  onClick={verifyPost}
-                >
-                  {state === "verifying" ? (
-                    <>
-                      <LoaderCircle className="spin" size={15} aria-hidden />
-                      Verifying
-                    </>
-                  ) : state === "ready" ? (
-                    <>
-                      <Check size={15} aria-hidden />
-                      Verified
-                    </>
-                  ) : (
-                    "Verify post"
-                  )}
-                </button>
-              </div>
+              <input
+                id="post-url"
+                type="url"
+                inputMode="url"
+                autoComplete="url"
+                placeholder="https://x.com/yourname/status/..."
+                value={postUrl}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? "post-url-error" : undefined}
+                onChange={(event) => {
+                  setPostUrl(event.target.value);
+                  setError("");
+                }}
+              />
               {error && (
                 <p className="field-error" id="post-url-error">
                   {error}
                 </p>
               )}
-              {state === "ready" && (
-                <p className="field-success">
-                  <ShieldCheck size={14} aria-hidden />
-                  Owned by connected account @sumanbuilds
-                </p>
-              )}
+              <p className="field-hint">
+                FlowEarn does not mark ownership or views verified until the
+                official X API returns them.
+              </p>
             </div>
 
             <div className="form-divider" />
@@ -215,7 +232,7 @@ export function SubmissionForm({ campaign }: { campaign: Campaign }) {
                 </>
               ) : (
                 <>
-                  Submit for tracking <ArrowRight size={17} aria-hidden />
+                  Submit for approval <ArrowRight size={17} aria-hidden />
                 </>
               )}
             </button>

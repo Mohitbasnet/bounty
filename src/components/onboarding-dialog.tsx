@@ -27,8 +27,8 @@ const creatorFocuses: {
   icon: typeof Megaphone;
 }[] = [
   {
-    value: "Writing",
-    label: "Writing",
+    value: "Thread",
+    label: "Threads",
     description: "Threads, stories, and explainers",
     icon: PenLine,
   },
@@ -39,7 +39,7 @@ const creatorFocuses: {
     icon: Clapperboard,
   },
   {
-    value: "Visuals",
+    value: "Visual",
     label: "Visuals",
     description: "Illustrations, carousels, and motion",
     icon: Palette,
@@ -47,9 +47,9 @@ const creatorFocuses: {
 ];
 
 const skillOptions: Record<CreatorFocus, string[]> = {
-  Writing: ["X threads", "Copywriting", "Storytelling", "Education", "Research"],
+  Thread: ["X threads", "Copywriting", "Storytelling", "Education", "Research"],
   Video: ["Short video", "Scripting", "Editing", "Voiceover", "UGC"],
-  Visuals: ["Graphic design", "Motion", "Illustration", "Carousels", "Memes"],
+  Visual: ["Graphic design", "Motion", "Illustration", "Carousels", "Memes"],
 };
 
 export function OnboardingDialog() {
@@ -63,7 +63,7 @@ export function OnboardingDialog() {
   const [mode, setMode] = useState<AccountMode>("creator");
   const [name, setName] = useState("");
   const [handle, setHandle] = useState("");
-  const [focus, setFocus] = useState<CreatorFocus>("Writing");
+  const [focus, setFocus] = useState<CreatorFocus>("Thread");
   const [skills, setSkills] = useState<string[]>(["X threads"]);
   const [error, setError] = useState("");
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -146,19 +146,18 @@ export function OnboardingDialog() {
       setError(mode === "creator" ? "Add your display name." : "Add your company name.");
       return;
     }
-    if (!handle.trim()) {
-      setError(
-        mode === "creator"
-          ? "Connect an X username to submit campaigns."
-          : "Add your company website.",
-      );
+    if (mode === "company" && !handle.trim()) {
+      setError("Add your company website.");
       return;
     }
 
     saveProfile({
       mode,
       name: name.trim(),
-      handle: handle.trim().replace(/^@/, ""),
+      handle:
+        mode === "creator"
+          ? profile?.handle ?? ""
+          : handle.trim().replace(/^@/, ""),
       focus,
       skills,
     });
@@ -206,7 +205,7 @@ export function OnboardingDialog() {
               >
                 <span><UserRound size={21} aria-hidden /></span>
                 <strong>Earn as a creator</strong>
-                <small>Find campaigns and grow live earnings.</small>
+                <small>Publish on X and earn from verified reach.</small>
                 {mode === "creator" && <Check size={17} aria-hidden />}
               </button>
               <button
@@ -217,8 +216,8 @@ export function OnboardingDialog() {
                 onClick={() => setMode("company")}
               >
                 <span><BriefcaseBusiness size={21} aria-hidden /></span>
-                <strong>Fund as a company</strong>
-                <small>Launch campaigns and pay verified results.</small>
+                <strong>Run a project campaign</strong>
+                <small>Fund USDC and pay only for verified reach.</small>
                 {mode === "company" && <Check size={17} aria-hidden />}
               </button>
             </div>
@@ -256,27 +255,25 @@ export function OnboardingDialog() {
                 <input
                   autoComplete={mode === "creator" ? "name" : "organization"}
                   id="profile-name"
-                  placeholder={mode === "creator" ? "Suman Giri" : "MagicBlock"}
+                  placeholder={mode === "creator" ? "Suman Giri" : "Acme Studio"}
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                 />
               </div>
-              <div className="field-group">
-                <label htmlFor="profile-handle">
-                  {mode === "creator" ? "X username*" : "Company website*"}
-                </label>
-                <input
-                  autoComplete={mode === "creator" ? "username" : "url"}
-                  id="profile-handle"
-                  inputMode={mode === "creator" ? "text" : "url"}
-                  placeholder={
-                    mode === "creator" ? "@sumanbuilds" : "magicblock.gg"
-                  }
-                  type={mode === "creator" ? "text" : "text"}
-                  value={handle}
-                  onChange={(event) => setHandle(event.target.value)}
-                />
-              </div>
+              {mode === "company" && (
+                <div className="field-group">
+                  <label htmlFor="profile-handle">Company website*</label>
+                  <input
+                    autoComplete="url"
+                    id="profile-handle"
+                    inputMode="url"
+                    placeholder="acme.example"
+                    type="text"
+                    value={handle}
+                    onChange={(event) => setHandle(event.target.value)}
+                  />
+                </div>
+              )}
             </div>
 
             {mode === "creator" && (
@@ -333,8 +330,9 @@ export function OnboardingDialog() {
               </p>
             )}
             <p className="profile-note">
-              Wallet connection comes later, when you fund or withdraw. No
-              signature is needed to browse.
+              {mode === "creator"
+                ? "Your publishing X account is verified later through official OAuth. No signature is needed to browse."
+                : "Wallet connection comes later when you fund a campaign. No signature is needed to browse."}
             </p>
             <button
               className="primary-button dialog-primary focus-ring"

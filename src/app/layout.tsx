@@ -4,15 +4,17 @@ import "@fontsource/manrope/500.css";
 import "@fontsource/manrope/600.css";
 import "@fontsource/manrope/700.css";
 import "@fontsource/jetbrains-mono/500.css";
+import "@solana/wallet-adapter-react-ui/styles.css";
 import "./globals.css";
 
 import { AppShell } from "@/components/app-shell";
 import { ProfileProvider } from "@/components/profile-context";
+import { SolanaProvider } from "@/components/solana-provider";
 
 export const metadata: Metadata = {
-  title: "FlowEarn — Real-time performance bounties",
+  title: "FlowEarn — Pay for verified creator reach",
   description:
-    "Creators earn continuously from verified performance and settle privately on Solana.",
+    "Companies fund X campaigns. Creators earn USDC from verified views with public Solana settlement.",
 };
 
 export default function RootLayout({
@@ -23,9 +25,11 @@ export default function RootLayout({
   return (
     <html data-scroll-behavior="smooth" lang="en">
       <body>
-        <ProfileProvider>
-          <AppShell>{children}</AppShell>
-        </ProfileProvider>
+        <SolanaProvider>
+          <ProfileProvider>
+            <AppShell>{children}</AppShell>
+          </ProfileProvider>
+        </SolanaProvider>
       </body>
     </html>
   );

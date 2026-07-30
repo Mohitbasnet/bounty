@@ -1,328 +1,225 @@
 "use client";
 
+import { useWallet } from "@solana/wallet-adapter-react";
+import bs58 from "bs58";
 import {
   Check,
   CircleDollarSign,
   ExternalLink,
   Eye,
-  FileCheck2,
-  Flag,
-  Heart,
   LoaderCircle,
-  MessageCircle,
-  Repeat2,
-  ShieldAlert,
-  ShieldCheck,
-  WalletCards,
+  RefreshCw,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const submissions = [
-  {
-    id: "sub-1",
-    name: "Suman Giri",
-    handle: "@sumanbuilds",
-    initials: "SG",
-    views: 8400,
-    likes: 624,
-    reposts: 91,
-    replies: 34,
-    live: 14.8,
-    available: 12,
-    status: "Verified",
-  },
-  {
-    id: "sub-2",
-    name: "Maya K.",
-    handle: "@mayamakes",
-    initials: "MK",
-    views: 3220,
-    likes: 208,
-    reposts: 41,
-    replies: 19,
-    live: 4.4,
-    available: 0,
-    status: "Validating",
-  },
-  {
-    id: "sub-3",
-    name: "Alex Chen",
-    handle: "@alexbuilds",
-    initials: "AC",
-    views: 780,
-    likes: 77,
-    reposts: 8,
-    replies: 5,
-    live: 0,
-    available: 0,
-    status: "Not eligible",
-  },
-];
+import { readApiResponse } from "@/lib/api";
+import { buildActionMessage } from "@/lib/messages";
+import { explorerTransactionUrl } from "@/lib/solana";
+
+type Submission = {
+  id: string;
+  campaign_title: string;
+  creator_wallet: string;
+  x_post_url: string;
+  note: string;
+  status: "pending" | "approved" | "rejected";
+  views: number;
+  accrued_micro: number;
+  paid_micro: number;
+  payout_signature: string | null;
+};
+
+type Action = "approved" | "rejected" | "sync" | "payout";
 
 export function SubmissionReview() {
-  const [selectedId, setSelectedId] = useState(submissions[0].id);
-  const [action, setAction] = useState<
-    "idle" | "approving" | "paying" | "paid" | "flagged"
-  >("idle");
-  const selected =
-    submissions.find((submission) => submission.id === selectedId) ??
-    submissions[0];
+  const { publicKey, signMessage } = useWallet();
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [workingId, setWorkingId] = useState("");
+  const [error, setError] = useState("");
 
-  function runAction(next: "approving" | "paying") {
-    setAction(next);
-    window.setTimeout(
-      () => setAction(next === "paying" ? "paid" : "idle"),
-      900,
-    );
+  async function loadSubmissions() {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/submissions", { cache: "no-store" });
+      const body = await readApiResponse<{ submissions: Submission[] }>(response);
+      setSubmissions(body.submissions);
+      setError("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to load submissions.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadSubmissions(), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  async function runAction(submission: Submission, action: Action) {
+    if (!publicKey || !signMessage) {
+      setError("Connect the company wallet first.");
+      return;
+    }
+    setWorkingId(submission.id);
+    setError("");
+    try {
+      const messageAction =
+        action === "approved" || action === "rejected"
+          ? "submission.review"
+          : `submission.${action}`;
+      const payload =
+        action === "approved" || action === "rejected"
+          ? { submissionId: submission.id, decision: action }
+          : { submissionId: submission.id };
+      const message = buildActionMessage({
+        action: messageAction,
+        wallet: publicKey.toBase58(),
+        payload,
+      });
+      const signature = await signMessage(new TextEncoder().encode(message));
+      const endpoint =
+        action === "approved" || action === "rejected"
+          ? `/api/submissions/${submission.id}/approve`
+          : `/api/submissions/${submission.id}/${action}`;
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wallet: publicKey.toBase58(),
+          message,
+          signature: bs58.encode(signature),
+          ...(action === "approved" || action === "rejected"
+            ? { decision: action }
+            : {}),
+        }),
+      });
+      await readApiResponse(response);
+      await loadSubmissions();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Action failed.");
+    } finally {
+      setWorkingId("");
+    }
   }
 
   return (
     <main className="review-page">
       <div className="review-heading">
         <div>
-          <span className="section-kicker">Campaign submissions</span>
-          <h1>Review performance</h1>
-          <p>Explain private payments without the jargon</p>
-        </div>
-        <div className="review-summary">
-          <span>
-            <FileCheck2 size={15} aria-hidden /> 28 total
-          </span>
-          <span>
-            <ShieldAlert size={15} aria-hidden /> 8 need review
-          </span>
+          <span className="section-kicker">Company review</span>
+          <h1>Creator submissions</h1>
+          <p>Approve content, sync official X metrics, and settle accrued USDC.</p>
         </div>
       </div>
 
-      {action === "paid" && (
-        <div className="success-banner review-banner" role="status">
-          <Check size={17} aria-hidden />
-          ${selected.available.toFixed(2)} payout reserved and submitted for
-          private Solana settlement.
+      {!publicKey && (
+        <div className="funding-notice">
+          Connect the campaign owner wallet to perform company actions.
         </div>
       )}
-
-      <div className="review-workspace">
-        <section className="submission-list" aria-label="Creator submissions">
-          <div className="submission-list-head">
-            <strong>Creators</strong>
-            <span>Sorted by newest snapshot</span>
-          </div>
-          {submissions.map((submission) => (
-            <button
-              className={`submission-list-item focus-ring ${
-                submission.id === selectedId ? "submission-selected" : ""
-              }`}
-              key={submission.id}
-              type="button"
-              onClick={() => {
-                setSelectedId(submission.id);
-                setAction("idle");
-              }}
-            >
-              <span className="creator-avatar">{submission.initials}</span>
-              <span className="creator-identity">
-                <strong>{submission.name}</strong>
-                <small>{submission.handle}</small>
-              </span>
-              <span className="list-metric">
-                <strong>{submission.views.toLocaleString()}</strong>
-                <small>views</small>
-              </span>
-              <span className={`review-status status-${submission.status.toLowerCase().replace(" ", "-")}`}>
-                {submission.status}
-              </span>
-            </button>
-          ))}
+      {error && <p className="field-error" role="alert">{error}</p>}
+      {loading && (
+        <p className="field-hint"><LoaderCircle className="spin" size={15} /> Loading submissions</p>
+      )}
+      {!loading && !submissions.length && (
+        <section className="campaign-card-empty">
+          <Eye size={24} aria-hidden />
+          <h2>No creator submissions yet.</h2>
+          <p>Pending submissions appear after a creator signs and submits an X post.</p>
         </section>
+      )}
 
-        <section className="review-detail">
-          <div className="review-detail-head">
-            <div className="review-person">
-              <span className="creator-avatar large-avatar">
-                {selected.initials}
-              </span>
-              <span>
-                <strong>{selected.name}&apos;s submission</strong>
-                <small>{selected.handle} · 7xKX...p2aB</small>
-              </span>
-            </div>
-            <a
-              className="secondary-button focus-ring"
-              href="https://x.com"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Open post <ExternalLink size={14} aria-hidden />
-            </a>
-          </div>
-
-          <div className="review-content-grid">
-            <div>
-              <section className="metrics-card">
-                <div className="metrics-head">
-                  <span>
-                    <span className="x-mark">X</span>
-                    Latest verified snapshot
+      <section className="submission-list" aria-label="Creator submissions">
+        {submissions.map((submission) => {
+          const working = workingId === submission.id;
+          return (
+            <article className="review-detail" key={submission.id}>
+              <div className="review-detail-head">
+                <div className="review-person">
+                  <span className="creator-avatar">
+                    {submission.creator_wallet.slice(0, 2)}
                   </span>
-                  <small>Updated 1 min ago</small>
-                </div>
-                <div className="metrics-grid">
-                  <div>
-                    <Eye size={17} aria-hidden />
-                    <strong>{selected.views.toLocaleString()}</strong>
-                    <span>Views</span>
-                  </div>
-                  <div>
-                    <Heart size={17} aria-hidden />
-                    <strong>{selected.likes.toLocaleString()}</strong>
-                    <span>Likes</span>
-                  </div>
-                  <div>
-                    <Repeat2 size={17} aria-hidden />
-                    <strong>{selected.reposts.toLocaleString()}</strong>
-                    <span>Reposts</span>
-                  </div>
-                  <div>
-                    <MessageCircle size={17} aria-hidden />
-                    <strong>{selected.replies.toLocaleString()}</strong>
-                    <span>Replies</span>
-                  </div>
-                </div>
-              </section>
-
-              <section className="submission-copy">
-                <span>Creator note</span>
-                <p>
-                  I used a simple payroll analogy to explain privacy without
-                  leading with cryptography. The final post includes a diagram
-                  and a short audience takeaway.
-                </p>
-              </section>
-
-              <section className="verification-checks">
-                <h2>Verification checks</h2>
-                <div>
                   <span>
-                    <ShieldCheck size={16} aria-hidden />
-                    Post ownership
+                    <strong>{submission.campaign_title}</strong>
+                    <small>
+                      {submission.creator_wallet.slice(0, 6)}...
+                      {submission.creator_wallet.slice(-4)} · {submission.status}
+                    </small>
                   </span>
-                  <strong>Passed</strong>
                 </div>
-                <div>
-                  <span>
-                    <ShieldCheck size={16} aria-hidden />
-                    Post remains public
-                  </span>
-                  <strong>Passed</strong>
-                </div>
-                <div>
-                  <span>
-                    <ShieldCheck size={16} aria-hidden />
-                    Traffic anomaly scan
-                  </span>
-                  <strong>No flags</strong>
-                </div>
-              </section>
-            </div>
-
-            <aside className="review-money-card">
-              <span className="section-kicker">Entitlement</span>
-              <div className="review-money-row">
-                <span>Live earning</span>
-                <strong>${selected.live.toFixed(2)}</strong>
+                <a
+                  className="secondary-button focus-ring"
+                  href={submission.x_post_url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open post <ExternalLink size={14} aria-hidden />
+                </a>
               </div>
-              <div className="review-money-row">
-                <span>Available now</span>
-                <strong>${selected.available.toFixed(2)}</strong>
+              <p>{submission.note || "No creator note supplied."}</p>
+              <div className="review-summary">
+                <span><Eye size={15} aria-hidden />{submission.views.toLocaleString()} verified views</span>
+                <span><CircleDollarSign size={15} aria-hidden />${(submission.accrued_micro / 1_000_000).toFixed(2)} accrued</span>
               </div>
-              <div className="review-money-row">
-                <span>Pending validation</span>
-                <strong>
-                  ${Math.max(selected.live - selected.available, 0).toFixed(2)}
-                </strong>
-              </div>
-              <div className="review-money-rule">
-                <Eye size={15} aria-hidden />
-                <span>
-                  1,000 unlock, then $0.20 per complete 100-view block.
-                </span>
-              </div>
-              <button
-                className="secondary-button full-button focus-ring"
-                type="button"
-                disabled={action === "approving"}
-                onClick={() => runAction("approving")}
-              >
-                {action === "approving" ? (
+              <div className="ppv-hero-actions">
+                {submission.status === "pending" && (
                   <>
-                    <LoaderCircle className="spin" size={15} aria-hidden />
-                    Saving review
-                  </>
-                ) : (
-                  <>
-                    <Check size={15} aria-hidden />
-                    Approve verification
+                    <button
+                      className="primary-button focus-ring"
+                      type="button"
+                      disabled={working}
+                      onClick={() => void runAction(submission, "approved")}
+                    >
+                      <Check size={15} aria-hidden /> Approve
+                    </button>
+                    <button
+                      className="secondary-button focus-ring"
+                      type="button"
+                      disabled={working}
+                      onClick={() => void runAction(submission, "rejected")}
+                    >
+                      <X size={15} aria-hidden /> Reject
+                    </button>
                   </>
                 )}
-              </button>
-              <button
-                className="primary-button full-button focus-ring"
-                type="button"
-                disabled={
-                  action === "paying" ||
-                  action === "paid" ||
-                  selected.available === 0
-                }
-                onClick={() => runAction("paying")}
-              >
-                {action === "paying" ? (
+                {submission.status === "approved" && (
                   <>
-                    <LoaderCircle className="spin" size={15} aria-hidden />
-                    Reserving balance
-                  </>
-                ) : action === "paid" ? (
-                  <>
-                    <Check size={15} aria-hidden />
-                    Payout submitted
-                  </>
-                ) : (
-                  <>
-                    <CircleDollarSign size={16} aria-hidden />
-                    Pay available now
+                    <button
+                      className="secondary-button focus-ring"
+                      type="button"
+                      disabled={working}
+                      onClick={() => void runAction(submission, "sync")}
+                    >
+                      <RefreshCw size={15} aria-hidden /> Sync official X metrics
+                    </button>
+                    <button
+                      className="primary-button focus-ring"
+                      type="button"
+                      disabled={working || submission.accrued_micro <= submission.paid_micro}
+                      onClick={() => void runAction(submission, "payout")}
+                    >
+                      <CircleDollarSign size={15} aria-hidden /> Pay accrued USDC
+                    </button>
                   </>
                 )}
-              </button>
-              <button
-                className="flag-button focus-ring"
-                type="button"
-                onClick={() =>
-                  setAction((current) =>
-                    current === "flagged" ? "idle" : "flagged",
-                  )
-                }
-              >
-                {action === "flagged" ? (
-                  <>
-                    <X size={15} aria-hidden />
-                    Remove flag
-                  </>
-                ) : (
-                  <>
-                    <Flag size={15} aria-hidden />
-                    Flag for manual review
-                  </>
+                {submission.payout_signature && (
+                  <a
+                    className="text-arrow-link focus-ring"
+                    href={explorerTransactionUrl(submission.payout_signature)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    View payout transaction <ExternalLink size={14} aria-hidden />
+                  </a>
                 )}
-              </button>
-              <div className="treasury-note">
-                <WalletCards size={15} aria-hidden />
-                <span>Paid from treasury 9dJ...3Pe on Solana devnet.</span>
               </div>
-            </aside>
-          </div>
-        </section>
-      </div>
+            </article>
+          );
+        })}
+      </section>
     </main>
   );
 }

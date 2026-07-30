@@ -1,51 +1,81 @@
 "use client";
 
+import { useWallet } from "@solana/wallet-adapter-react";
 import {
-  ArrowRight,
-  Check,
   CircleDollarSign,
   Clock3,
+  ExternalLink,
   Eye,
-  LoaderCircle,
-  LockKeyhole,
-  Radar,
   RefreshCw,
-  ShieldCheck,
   WalletCards,
 } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { calculateEarnings, featuredCampaign } from "@/lib/data";
+type Submission = {
+  id: string;
+  campaign_title: string;
+  campaign_slug: string;
+  x_post_url: string;
+  status: "pending" | "approved" | "rejected";
+  views: number;
+  accrued_micro: number;
+  paid_micro: number;
+  creator_paid_micro: number;
+  platform_fee_micro: number;
+  last_synced_at: string | null;
+  payout_signature: string | null;
+};
 
 export function EarningsDashboard() {
-  const [views, setViews] = useState(8400);
-  const [available, setAvailable] = useState(12);
-  const [updating, setUpdating] = useState(false);
-  const [withdrawing, setWithdrawing] = useState(false);
-  const [withdrawn, setWithdrawn] = useState(false);
-  const live = calculateEarnings(views, featuredCampaign);
-  const pending = Math.max(live - available, 0);
-  const nextBlockProgress =
-    Math.max(views - featuredCampaign.unlockViews, 0) %
-    featuredCampaign.viewsPerBlock;
+  const { publicKey } = useWallet();
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  function refreshMetrics() {
-    setUpdating(true);
-    window.setTimeout(() => {
-      setViews((current) => current + 237);
-      setUpdating(false);
-    }, 700);
-  }
+  useEffect(() => {
+    if (!publicKey) {
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      fetch(`/api/submissions?wallet=${publicKey.toBase58()}`, {
+        signal: controller.signal,
+      })
+        .then(async (response) => {
+          const body = (await response.json()) as {
+            submissions?: Submission[];
+            error?: string;
+          };
+          if (!response.ok) throw new Error(body.error ?? "Unable to load earnings.");
+          setSubmissions(body.submissions ?? []);
+          setError("");
+        })
+        .catch((cause) => {
+          if (cause instanceof Error && cause.name !== "AbortError") {
+            setError(cause.message);
+          }
+        })
+        .finally(() => setLoading(false));
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [publicKey]);
 
-  function withdraw() {
-    setWithdrawing(true);
-    window.setTimeout(() => {
-      setWithdrawing(false);
-      setWithdrawn(true);
-      setAvailable(0);
-    }, 1000);
-  }
+  const accruedMicro = submissions.reduce(
+    (sum, submission) => sum + submission.accrued_micro,
+    0,
+  );
+  const paidMicro = submissions.reduce(
+    (sum, submission) => sum + submission.creator_paid_micro,
+    0,
+  );
+  const settledGrossMicro = submissions.reduce(
+    (sum, submission) => sum + submission.paid_micro,
+    0,
+  );
 
   return (
     <main className="dashboard-page">
@@ -53,177 +83,90 @@ export function EarningsDashboard() {
         <div className="dashboard-heading">
           <div>
             <span className="section-kicker">Creator dashboard</span>
-            <h1>Your work is earning.</h1>
+            <h1>Your verified reach.</h1>
             <p>
-              Track provisional growth, validation, and finalized USDC in one
-              place.
+              Real submissions, official X snapshots, and confirmed USDC
+              payouts appear here.
             </p>
           </div>
-          <button
-            className="secondary-button focus-ring"
-            type="button"
-            disabled={updating}
-            onClick={refreshMetrics}
-          >
-            <RefreshCw
-              className={updating ? "spin" : ""}
-              size={16}
-              aria-hidden
-            />
-            {updating ? "Updating" : "Simulate snapshot"}
-          </button>
         </div>
 
-        <section className="balance-grid" aria-label="Earning balances">
-          <div className="balance-card balance-live">
-            <span>
-              <Radar size={17} aria-hidden />
-              Live earning
-            </span>
-            <strong>${live.toFixed(2)}</strong>
-            <small>Based on latest verified snapshot</small>
-          </div>
-          <div className="balance-card">
-            <span>
-              <WalletCards size={17} aria-hidden />
-              Available
-            </span>
-            <strong>${available.toFixed(2)}</strong>
-            <small>Finalized and ready to withdraw</small>
-          </div>
-          <div className="balance-card">
-            <span>
-              <Clock3 size={17} aria-hidden />
-              Pending validation
-            </span>
-            <strong>${pending.toFixed(2)}</strong>
-            <small>Finalizes after the 48h review</small>
-          </div>
-        </section>
-
-        {withdrawn && (
-          <div className="success-banner" role="status">
-            <Check size={17} aria-hidden />
-            $12.00 private USDC payout submitted. Treasury transaction is
-            confirming on Solana devnet.
-          </div>
-        )}
-
-        <div className="dashboard-grid">
-          <section className="tracking-panel">
-            <div className="panel-heading">
-              <div>
-                <span className="live-indicator">
-                  <span aria-hidden />
-                  Tracking live
-                </span>
-                <h2>{featuredCampaign.title}</h2>
-                <p>by {featuredCampaign.company}</p>
-              </div>
-              <Link
-                className="card-link focus-ring"
-                href={`/campaigns/${featuredCampaign.slug}`}
-                aria-label="Open campaign"
-              >
-                <ArrowRight size={18} aria-hidden />
-              </Link>
-            </div>
-
-            <div className="large-metric">
-              <span>Verified views</span>
-              <strong>{views.toLocaleString()}</strong>
-              <small>
-                <Eye size={14} aria-hidden />
-                Last checked just now
-              </small>
-            </div>
-
-            <div className="block-progress">
-              <div className="block-progress-label">
-                <span>Next ${featuredCampaign.rewardPerBlock.toFixed(2)}</span>
-                <strong>
-                  {nextBlockProgress}/{featuredCampaign.viewsPerBlock} views
-                </strong>
-              </div>
-              <div className="progress-track">
-                <span
-                  style={{
-                    width: `${
-                      (nextBlockProgress / featuredCampaign.viewsPerBlock) * 100
-                    }%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="tracking-facts">
-              <div>
-                <span>Eligibility threshold</span>
-                <strong className="fact-complete">
-                  <Check size={14} aria-hidden />
-                  {featuredCampaign.unlockViews.toLocaleString()} passed
-                </strong>
-              </div>
-              <div>
-                <span>Reward blocks completed</span>
-                <strong>
-                  {Math.floor(
-                    Math.max(views - featuredCampaign.unlockViews, 0) /
-                      featuredCampaign.viewsPerBlock,
-                  )}
-                </strong>
-              </div>
-              <div>
-                <span>Creator cap</span>
-                <strong>${featuredCampaign.maxPerCreator} USDC</strong>
-              </div>
-            </div>
+        {!publicKey ? (
+          <section className="campaign-card-empty">
+            <WalletCards size={24} aria-hidden />
+            <h2>Connect your creator wallet.</h2>
+            <p>The wallet in the header identifies your submissions and payouts.</p>
           </section>
+        ) : (
+          <>
+            <section className="balance-grid" aria-label="Earning balances">
+              <div className="balance-card balance-live">
+                <span><Eye size={17} aria-hidden />Accrued</span>
+                <strong>${(accruedMicro / 1_000_000).toFixed(2)}</strong>
+                <small>From latest official snapshots</small>
+              </div>
+              <div className="balance-card">
+                <span><CircleDollarSign size={17} aria-hidden />Paid</span>
+                <strong>${(paidMicro / 1_000_000).toFixed(2)}</strong>
+                <small>Confirmed public USDC payouts</small>
+              </div>
+              <div className="balance-card">
+                <span><Clock3 size={17} aria-hidden />Awaiting payout</span>
+                <strong>
+                  ${((accruedMicro - settledGrossMicro) / 1_000_000).toFixed(2)}
+                </strong>
+                <small>Approved and accrued, not yet settled</small>
+              </div>
+            </section>
 
-          <aside className="withdraw-panel">
-            <div className="withdraw-icon">
-              <LockKeyhole size={21} aria-hidden />
-            </div>
-            <span className="section-kicker">Private settlement</span>
-            <h2>Withdraw available USDC</h2>
-            <p>
-              The payout engine reserves your available balance, prevents
-              duplicates, and submits one private settlement transaction.
-            </p>
-            <div className="withdraw-amount">
-              <span>Ready now</span>
-              <strong>${available.toFixed(2)} USDC</strong>
-            </div>
-            <button
-              className="primary-button submit-button focus-ring"
-              type="button"
-              disabled={withdrawing || available === 0}
-              aria-busy={withdrawing}
-              onClick={withdraw}
-            >
-              {withdrawing ? (
-                <>
-                  <LoaderCircle className="spin" size={16} aria-hidden />
-                  Reserving balance
-                </>
-              ) : available === 0 ? (
-                "No balance available"
-              ) : (
-                <>
-                  <CircleDollarSign size={17} aria-hidden />
-                  Withdraw privately
-                </>
-              )}
-            </button>
-            <div className="withdraw-note">
-              <ShieldCheck size={15} aria-hidden />
-              <span>
-                Demo transaction. Mainnet payouts require a configured treasury
-                signer and MagicBlock credentials.
-              </span>
-            </div>
-          </aside>
-        </div>
+            {loading && (
+              <p className="field-hint"><RefreshCw className="spin" size={15} /> Loading submissions</p>
+            )}
+            {error && <p className="field-error" role="alert">{error}</p>}
+            {!loading && !submissions.length && (
+              <section className="campaign-card-empty">
+                <Eye size={24} aria-hidden />
+                <h2>No submissions yet.</h2>
+                <p>Submit an X post to a funded live campaign to begin.</p>
+              </section>
+            )}
+            {!!submissions.length && (
+              <section className="company-panel">
+                <div className="company-panel-heading">
+                  <div><h2>Your submissions</h2><p>No estimated or fabricated metrics.</p></div>
+                </div>
+                <div className="campaign-table" role="table">
+                  {submissions.map((submission) => (
+                    <div className="campaign-table-row" role="row" key={submission.id}>
+                      <div className="table-campaign" role="cell">
+                        <span>
+                          <strong>{submission.campaign_title}</strong>
+                          <small>{submission.status}</small>
+                        </span>
+                      </div>
+                      <span role="cell">{submission.views.toLocaleString()} views</span>
+                      <span role="cell">
+                        ${(submission.accrued_micro / 1_000_000).toFixed(2)} accrued
+                      </span>
+                      <span role="cell">
+                        ${(submission.creator_paid_micro / 1_000_000).toFixed(2)} received
+                      </span>
+                      <a
+                        className="card-link focus-ring"
+                        href={submission.x_post_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label="Open X post"
+                      >
+                        <ExternalLink size={17} aria-hidden />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
       </div>
     </main>
   );

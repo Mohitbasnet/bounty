@@ -17,7 +17,8 @@ import { notFound } from "next/navigation";
 
 import { CampaignDetailActions } from "@/components/campaign-detail-actions";
 import { CampaignSubmitAction } from "@/components/campaign-submit-action";
-import { getCampaign } from "@/lib/data";
+import { getLiveCampaign } from "@/lib/campaign-store";
+import { getRatePerThousand } from "@/lib/data";
 
 export default async function CampaignPage({
   params,
@@ -25,7 +26,7 @@ export default async function CampaignPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const campaign = getCampaign(slug);
+  const campaign = getLiveCampaign(slug);
 
   if (!campaign) notFound();
 
@@ -35,7 +36,7 @@ export default async function CampaignPage({
   return (
     <main className="listing-detail-page">
       <div className="listing-detail-wrap">
-        <Link className="back-link focus-ring" href="/#campaigns">
+        <Link className="back-link focus-ring" href="/campaigns">
           <ArrowLeft size={16} aria-hidden />
           All campaigns
         </Link>
@@ -48,7 +49,9 @@ export default async function CampaignPage({
             <div>
               <h1>{campaign.title}</h1>
               <div className="listing-header-meta">
-                <span>by {campaign.company}</span>
+                <Link href={`/projects/${campaign.projectSlug}`}>
+                  by {campaign.company}
+                </Link>
                 <span aria-hidden>·</span>
                 <span>{campaign.category} campaign</span>
                 <span aria-hidden>·</span>
@@ -95,10 +98,9 @@ export default async function CampaignPage({
                 <div>
                   <span className="rate-node" aria-hidden />
                   <span>
-                    <small>Performance rate</small>
+                    <small>Verified-view rate</small>
                     <strong>
-                      ${campaign.rewardPerBlock.toFixed(2)} per{" "}
-                      {campaign.viewsPerBlock} views
+                      ${getRatePerThousand(campaign).toFixed(2)} per 1K views
                     </strong>
                   </span>
                 </div>
@@ -142,8 +144,10 @@ export default async function CampaignPage({
             <section className="listing-side-section">
               <h2>Settlement</h2>
               <p>
-                Live earnings accrue off-chain. Finalized USDC settles
-                privately on Solana.
+                Approved posts accrue off-chain from 30-minute X snapshots.
+                Finalized USDC settles publicly in a confirmed daily Solana
+                batch. FlowEarn&apos;s configured platform fee is deducted
+                during payout.
               </p>
               <span className="listing-secured">
                 <LockKeyhole size={14} aria-hidden />
@@ -172,8 +176,8 @@ export default async function CampaignPage({
             <section className="listing-document-section">
               <h2>What you need to submit</h2>
               <p>
-                Your submission enters tracking only after ownership and the
-                required deliverables pass verification.
+                Your submission starts earning only after ownership,
+                eligibility, and the required deliverables pass company review.
               </p>
               <ul className="listing-check-list">
                 {campaign.deliverables.map((item) => (
@@ -192,6 +196,8 @@ export default async function CampaignPage({
                 post reaches {campaign.unlockViews.toLocaleString()} verified
                 views, every complete {campaign.viewsPerBlock}-view block adds{" "}
                 ${campaign.rewardPerBlock.toFixed(2)} to your live earning.
+                That is ${getRatePerThousand(campaign).toFixed(2)} per 1,000
+                verified views.
               </p>
               <div className="listing-formula">
                 <div>
@@ -254,7 +260,7 @@ export default async function CampaignPage({
                 <div>
                   <span>02</span>
                   <strong>Verify</strong>
-                  <p>Ownership and campaign requirements are checked.</p>
+                  <p>Ownership is checked and the company approves the post.</p>
                 </div>
                 <div>
                   <span>03</span>
@@ -264,7 +270,7 @@ export default async function CampaignPage({
                 <div>
                   <span>04</span>
                   <strong>Settle</strong>
-                  <p>Validated USDC becomes available for private withdrawal.</p>
+                  <p>Finalized USDC is paid in the next public batch.</p>
                 </div>
               </div>
             </section>

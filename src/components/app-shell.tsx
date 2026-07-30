@@ -18,15 +18,19 @@ import { useState } from "react";
 
 import { OnboardingDialog } from "@/components/onboarding-dialog";
 import { useProfile } from "@/components/profile-context";
+import { SiteFooter } from "@/components/site-footer";
+import { WalletButton } from "@/components/wallet-button";
 
 const creatorLinks = [
-  { href: "/", label: "Explore" },
+  { href: "/campaigns", label: "Campaigns" },
+  { href: "/projects", label: "Companies" },
   { href: "/dashboard", label: "My earnings" },
 ];
 
 const companyLinks = [
-  { href: "/company", label: "Campaigns" },
+  { href: "/company", label: "Dashboard" },
   { href: "/company/submissions", label: "Submissions" },
+  { href: "/campaigns/new", label: "Launch" },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -34,7 +38,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const { profile, isReady, openOnboarding, signOut } = useProfile();
-  const companyMode = pathname.startsWith("/company");
+  const companyMode =
+    pathname.startsWith("/company") || pathname === "/campaigns/new";
   const links = companyMode ? companyLinks : creatorLinks;
 
   return (
@@ -43,7 +48,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <span className="network-dot" aria-hidden />
         Solana devnet
         <span className="network-divider" aria-hidden />
-        Demo data
+        Public USDC settlement
       </div>
       <header className="app-header">
         <div className="header-inner">
@@ -59,7 +64,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={link.href}
                 className={`nav-link focus-ring ${
-                  pathname === link.href ? "nav-link-active" : ""
+                  pathname === link.href ||
+                  (link.href !== "/" && pathname.startsWith(`${link.href}/`))
+                    ? "nav-link-active"
+                    : ""
                 }`}
                 href={link.href}
               >
@@ -69,6 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="header-actions">
+            <WalletButton />
             <Link className="icon-button focus-ring" aria-label="Search campaigns" href="/#campaigns">
               <Search size={18} aria-hidden />
             </Link>
@@ -109,7 +118,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <strong>{profile.name}</strong>
                       <small>
                         {profile.mode === "creator"
-                          ? `@${profile.handle}`
+                          ? profile.handle
+                            ? `@${profile.handle}`
+                            : "X connects before submission"
                           : profile.handle}
                       </small>
                     </div>
@@ -196,6 +207,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       {children}
+      <SiteFooter />
       <OnboardingDialog />
     </div>
   );

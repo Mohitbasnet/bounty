@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 export type AccountMode = "creator" | "company";
-export type CreatorFocus = "Writing" | "Video" | "Visuals";
+export type CreatorFocus = "Thread" | "Video" | "Visual";
 
 export type DemoProfile = {
   mode: AccountMode;
@@ -25,7 +25,7 @@ type ProfileContextValue = {
 
 const ProfileContext = createContext<ProfileContextValue | null>(null);
 const STORAGE_KEY = "flowearn-demo-profile";
-const creatorFocuses: CreatorFocus[] = ["Writing", "Video", "Visuals"];
+const creatorFocuses: CreatorFocus[] = ["Thread", "Video", "Visual"];
 
 function parseStoredProfile(value: string): DemoProfile | null {
   const parsed = JSON.parse(value) as Partial<DemoProfile>;
@@ -39,7 +39,7 @@ function parseStoredProfile(value: string): DemoProfile | null {
 
   const focus = creatorFocuses.includes(parsed.focus as CreatorFocus)
     ? (parsed.focus as CreatorFocus)
-    : "Writing";
+    : "Thread";
 
   return {
     mode: parsed.mode,
