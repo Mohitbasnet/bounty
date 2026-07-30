@@ -1,23 +1,17 @@
-@AGENTS.md
+# FlowEarn Development Context
 
-# Project Context
+FlowEarn is a company-funded, USDC-only creator marketing platform for X.
+Companies pay approved creators according to verified impressions.
 
-This repository contains an interactive, mock-first V1 frontend for a real-time,
-performance-based creator micropayment bounty platform. After an eligibility
-threshold, completed blocks of verified views create small earnings; accumulated
-payouts use MagicBlock Private Payments.
+## V1 Guardrails
 
-## Development Guardrails
-
-- Frontend V1 development was explicitly approved on July 23, 2026.
-- Read `README.md` and every file in `docs/` before proposing implementation.
-- Keep Version 1 narrow: X campaigns, one primary metric, USDC, and MagicBlock.
-- Preserve the core distinction between reward-block micro-earning accrual and
-  creator-requested or campaign-end private settlement.
-- V1 uses MagicBlock Private Payments API only. Do not add MagicBlock ER, PER,
-  delegated accounts, or a custom Solana program.
-- Do not add AI features, a custom Anchor program, MagicBlock ER, extra social
-  platforms, or microservices to Version 1.
-- Treat money as integer base units and design all monetary changes as
-  append-only, idempotent ledger events.
-- Never mark a payout paid before blockchain confirmation is reconciled.
+- Focus only on X creators and company marketing campaigns.
+- Use official X API data only. Never fabricate a successful verification.
+- Use Solana devnet USDC and public settlement.
+- Do not add project-token payouts, holder gates, AI, MagicBlock, private
+  payments, Ephemeral Rollups, or a custom Anchor program.
+- Every campaign is funded before it becomes live.
+- Every company mutation requires the owner wallet signature.
+- Every payout must be confirmed before database state changes.
+- Keep accounting in integer micro-USDC.
+- Preserve FlowEarn branding; do not copy Shillers source, text, or visual brand.

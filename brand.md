@@ -33,4 +33,4 @@ transaction.
 - Use “campaign,” not “listing.”
 - Use “live earning” for provisional accrual.
 - Use “available” for finalized, withdrawable USDC.
-- Use “private settlement” for the final MagicBlock payout.
+- Use “public Solana settlement” for confirmed USDC payouts.

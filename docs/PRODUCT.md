@@ -1,120 +1,42 @@
-# Product Definition
+# Product
 
-## Working Positioning
+FlowEarn lets ordinary companies fund X creator campaigns in USDC and pay for
+verified reach instead of a flat post fee.
 
-**Performance payroll for Web3 creators.**
+## Users
 
-> Every qualified creator earns under a public formula as verified results grow.
+- Companies create briefs, define a view rate, fund a hard budget, approve
+  submissions, and recover unused funds.
+- Creators publish on X, submit the public URL, and earn from official
+  impression snapshots after approval.
 
-The first customer is a Web3 company that already pays creators but currently
-uses spreadsheets, screenshots, manual metric checks, and slow wallet transfers.
-
-V1 is specifically for original creator-led X content: writing, short video, and
-visual storytelling. It is not a developer-work marketplace, generic job board,
-winner-take-all bounty platform, or high-volume clipping marketplace. See
-`docs/POSITIONING.md` for the competitive analysis and product contract.
-
-## Problem
-
-Traditional bounty platforms collect submissions and later choose winners or
-manually decide a fixed reward. They do not let a creator become eligible and
-then watch a small earning stream grow as additional verified-view blocks
-complete.
-Creators do not know what they have earned, what is still being verified, or
-when payment will arrive.
-
-## Solution
-
-Companies create and pre-fund measurable campaigns. Creators submit content.
-Once a submission crosses its eligibility threshold, verified views begin
-filling reward blocks. Each completed block, such as 100 views, creates a
-micro-earning. The platform shows block progress and accumulated earnings,
-separates provisional and available balances, and privately settles accumulated
-USDC through MagicBlock.
-
-## Core Campaign Example
+## Core Rule
 
 ```text
-Campaign duration: 7 days
-Eligibility unlock: 1,000 verified views
-Reward block: 100 verified views after unlock
-Reward: $0.20 per completed block
-Maximum per creator: $100
-
-Views 0-999       -> Not eligible
-View 1,000        -> Earning unlocks
-Views 1,001-1,099 -> Progress toward first reward block
-View 1,100        -> $0.20 micro-earning recorded
-View 1,200        -> Total earning becomes $0.40
-Creator withdraws -> Available amount is privately settled
-Campaign end      -> Remaining amount is privately settled and reconciled
+eligible_views = max(verified_views - unlock_views, 0)
+blocks = floor(eligible_views / views_per_block)
+gross = min(blocks * reward_per_block, creator_cap)
+payable = gross - already_paid
 ```
 
-V1 uses a fixed view block rather than a per-view rate. Internally rewards are
-calculated in integer USDC base units.
+Accounting uses integer micro-USDC. Metrics do not create a transaction.
+Confirmed public Solana transfers settle accumulated earnings.
 
-A proposed gamified layer can add fixed four-hour momentum bonus epochs based on
-new verified views during each epoch. The predictable base rate remains intact,
-and epoch bonuses accrue in the ledger before batched private settlement. See
-`docs/GAMIFIED-MICROPAYMENTS.md`; its exact defaults are not yet locked.
+## Settlement Lifecycle
 
-## V1 User Journey
+```text
+Every 30 minutes -> verify linked X author and update impressions
+Every day 12 UTC -> pay creator USDC and split the 2% platform fee
+Campaign expiry  -> pay outstanding earnings, then refund remaining USDC
+```
 
-### Company
+Company approval controls which posts enter tracking. It does not let a company
+change the published rate or take funds reserved for accrued creator earnings.
 
-1. Connect a wallet and create an organization.
-2. Fund a campaign budget in USDC.
-3. Define content requirements, eligibility, reward rate, cap, and validation
-   delay.
-4. Review creators, submissions, metrics, and risk flags.
-5. Monitor creator withdrawals and campaign-end settlement.
+## Not V1
 
-### Creator
-
-1. Connect a wallet and X account.
-2. Join an eligible campaign.
-3. Publish and submit an X post URL.
-4. See eligibility progress and the micro-earning stream.
-5. See finalized and available balances.
-6. Request a private USDC withdrawal.
-7. See payout status and history.
-
-### Operator
-
-1. Review failed ownership checks and suspicious metrics.
-2. Approve or reject finalization during the pilot.
-3. Retry or reconcile failed payments.
-4. Record an audit reason for every manual action.
-
-## Product Principles
-
-- **Fund first:** no unfunded promises.
-- **Performance creates the stream:** time alone never increases earnings.
-- **Unlock, then fill blocks:** the eligibility threshold controls when reward
-  progress begins.
-- **Evidence before money:** payment uses verified snapshots, not UI animation.
-- **Ledger before balance:** every money change is auditable.
-- **One payout engine:** every trigger follows identical safety checks.
-- **Manual is acceptable in V1:** risky automation is worse than visible review.
-- **Privacy with precision:** explain exactly which payment data is private.
-- **Private Payments only in V1:** no MagicBlock ER, PER, or custom program.
-- **Adapter boundaries:** X and MagicBlock are providers, not the core domain.
-
-## Success Hypotheses
-
-V1 should answer:
-
-- Will companies pre-fund performance-based creator campaigns?
-- Do creators trust provisional and finalized balances?
-- Can we validate X performance reliably enough to support payment?
-- Does the live micropayment experience motivate creators and differentiate the
-  product from winner-based bounty platforms?
-- Does private USDC payout improve the settlement experience after earnings
-  accrue?
-- Can one operator safely manage disputes and failed payouts?
-
-## Business Model Hypothesis
-
-Start with a platform fee on successfully paid campaign value. Do not finalize
-pricing until pilot interviews establish whether companies prefer a percentage,
-campaign fee, or subscription.
+- Project-token payouts or token-holder gates
+- Developer, design, job, or generic bounty listings
+- Private payments or MagicBlock
+- Custom Solana programs
+- AI features
