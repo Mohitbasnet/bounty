@@ -20,7 +20,8 @@ payable = gross - already_paid
 ```
 
 Accounting uses integer micro-USDC. Metrics do not create a transaction.
-Confirmed public Solana transfers settle accumulated earnings.
+The app shows live earning as verified impressions are synced, while confirmed
+public Solana transfers settle accumulated earnings in practical batches.
 
 ## Settlement Lifecycle
 
