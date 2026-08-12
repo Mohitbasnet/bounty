@@ -4945,6 +4945,17 @@ a {
   background: var(--surface);
 }
 
+.live-earning-step {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 16px;
+  padding: 26px 28px;
+}
+
+.live-earning-step + .live-earning-step {
+  border-top: 1px solid var(--line);
+}
+
 .campaign-search-row,
 .project-toolbar {
   display: grid;
