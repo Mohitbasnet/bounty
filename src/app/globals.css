@@ -4969,6 +4969,28 @@ a {
   background: var(--surface-strong);
   color: var(--lime);
 }
+.live-earning-step-label {
+  display: block;
+  color: #69753b;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.live-earning-step h3 {
+  margin: 8px 0 6px;
+  font-size: 20px;
+  letter-spacing: -0.035em;
+}
+
+.live-earning-step p {
+  max-width: 520px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
 .campaign-search-row,
 .project-toolbar {
   display: grid;
