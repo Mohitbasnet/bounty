@@ -4924,6 +4924,12 @@ a {
   border-left: 1px solid var(--line);
 }
 
+.live-earning-section {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 120px var(--page-gutter) 64px;
+}
+
 .campaign-search-row,
 .project-toolbar {
   display: grid;
