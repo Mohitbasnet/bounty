@@ -4937,6 +4937,14 @@ a {
   margin-top: 48px;
 }
 
+.live-earning-track {
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
 .campaign-search-row,
 .project-toolbar {
   display: grid;
