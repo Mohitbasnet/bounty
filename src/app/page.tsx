@@ -1,8 +1,10 @@
 import {
+  Activity,
   ArrowRight,
   BadgeCheck,
   CircleDollarSign,
   Eye,
+  Gauge,
   Link2,
   RefreshCw,
   ShieldCheck,
@@ -103,16 +105,73 @@ export default function Home() {
           </div>
           <div className="board-settlement">
             <Link2 size={17} aria-hidden />
-            <span><strong>Next public settlement</strong> Batched · USDC</span>
+            <span><strong>Next public settlement</strong> Confirmed batch · USDC</span>
           </div>
         </div>
       </section>
 
       <section className="proof-rail" aria-label="Product guarantees">
-        <span><Eye size={18} aria-hidden /> Official X metrics</span>
+        <span><Eye size={18} aria-hidden /> Official X impressions</span>
         <span><CircleDollarSign size={18} aria-hidden /> Funded USDC pools</span>
         <span><BadgeCheck size={18} aria-hidden /> Company-approved posts</span>
-        <span><RefreshCw size={18} aria-hidden /> Refundable unspent budget</span>
+        <span><RefreshCw size={18} aria-hidden /> Public batch settlement</span>
+      </section>
+
+      <section className="live-earning-section" aria-labelledby="live-earning-title">
+        <div className="section-heading">
+          <div>
+            <span className="section-kicker">Live micro-earning</span>
+            <h2 id="live-earning-title">Fast feedback for creators. Clear settlement for everyone.</h2>
+          </div>
+          <p>
+            FlowEarn updates a live earning ledger as official X impression
+            snapshots arrive. Your balance moves in integer micro-USDC blocks;
+            confirmed earnings settle in public Solana batches.
+          </p>
+        </div>
+
+        <div className="live-earning-layout">
+          <div className="live-earning-track" aria-label="Earning lifecycle">
+            <article className="live-earning-step">
+              <span className="live-earning-step-icon"><Eye size={18} aria-hidden /></span>
+              <div>
+                <span className="live-earning-step-label">01 / VERIFIED SIGNAL</span>
+                <h3>Official impressions arrive</h3>
+                <p>Approved posts are checked against the creator’s linked X account.</p>
+              </div>
+            </article>
+            <article className="live-earning-step live-earning-step-active">
+              <span className="live-earning-step-icon"><Activity size={18} aria-hidden /></span>
+              <div>
+                <span className="live-earning-step-label">02 / LIVE LEDGER</span>
+                <h3>Micro-earnings update</h3>
+                <p>Small integer USDC blocks accrue in the app as verified reach grows.</p>
+              </div>
+            </article>
+            <article className="live-earning-step">
+              <span className="live-earning-step-icon"><Gauge size={18} aria-hidden /></span>
+              <div>
+                <span className="live-earning-step-label">03 / PUBLIC SETTLEMENT</span>
+                <h3>Available USDC is paid</h3>
+                <p>Finalized earnings leave the funded treasury in a confirmed Solana batch.</p>
+              </div>
+            </article>
+          </div>
+
+          <aside className="live-earning-callout">
+            <span className="section-kicker">The honest version</span>
+            <h3>Live earning, not a transaction per impression.</h3>
+            <p>
+              Creators get fast performance feedback without paying a
+              blockchain fee for every metric update. Companies and creators
+              still get a public USDC transaction when the balance is settled.
+            </p>
+            <div className="live-earning-callout-note">
+              <ShieldCheck size={16} aria-hidden />
+              <span>Verified X data in. Confirmed Solana settlement out.</span>
+            </div>
+          </aside>
+        </div>
       </section>
 
       <CampaignExplorer campaigns={campaigns} />
