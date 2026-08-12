@@ -15,7 +15,7 @@
 - Exact linked X user ID versus post author verification.
 - Wallet-signed company approve/reject actions.
 - Official X API metrics adapter with fail-closed missing-credential behavior.
-- Thirty-minute scheduled metrics polling.
+- Thirty-minute metrics polling through the authorized scheduler workflow.
 - Integer micro-USDC accrual calculation.
 - Daily scheduled treasury-signed public devnet USDC payout.
 - Configurable 2% creator/platform fee split in one transaction.

@@ -18,7 +18,8 @@ MagicBlock, private payments, a custom Solana program, or fabricated X data.
 5. A creator connects a wallet and submits a public X post URL.
 6. The creator links X through wallet-signed OAuth 2.0 PKCE.
 7. The company wallet approves or rejects the submission.
-8. Every 30 minutes FlowEarn checks the linked account and official X metrics.
+8. Every 30 minutes an authorized scheduler checks the linked account and
+   official X metrics.
 9. Earnings accrue in integer micro-USDC reward blocks.
 10. At 12:00 UTC the treasury sends creator USDC and the 2% platform fee.
 11. The payout is marked paid only after Solana confirmation.
@@ -63,8 +64,10 @@ npm run build
 - Official X credentials and a matching Developer Console redirect URI are
   required for ownership and metrics verification.
 - The local SQLite and local encrypted signer are development infrastructure.
-- Vercel schedules metrics every 30 minutes, payouts daily at 12:00 UTC, and
-  expired-campaign refunds at 12:15 UTC.
+- On Vercel Hobby, settlement runs daily at 12:00 UTC and expired-campaign
+  refunds run at 12:15 UTC. The repository's GitHub Actions workflow calls the
+  metrics endpoint every 30 minutes; configure `FLOWEARN_URL` and `CRON_SECRET`
+  as GitHub repository secrets.
 - Payout and refund transitions use database locks and pre-recorded transaction
   signatures to reduce duplicate settlement risk.
 - Production still requires Postgres, a durable queue, and managed custody.

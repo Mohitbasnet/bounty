@@ -1,0 +1,21 @@
+name: Sync X metrics
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  sync-metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync approved submissions
+        env:
+          FLOWEARN_URL: ${{ secrets.FLOWEARN_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          test -n "$FLOWEARN_URL" || (echo "FLOWEARN_URL secret is missing" >&2; exit 1)
+          test -n "$CRON_SECRET" || (echo "CRON_SECRET secret is missing" >&2; exit 1)
+          curl --fail-with-body --retry 2 --connect-timeout 15 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${FLOWEARN_URL%/}/api/cron/metrics"

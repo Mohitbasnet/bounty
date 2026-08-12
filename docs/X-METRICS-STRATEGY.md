@@ -22,9 +22,10 @@ tweet.read users.read offline.access
 
 ## Polling
 
-The scheduled worker runs every 30 minutes and requests public metrics for all
-approved submissions in live campaigns. A failed or unavailable API request
-does not change earnings.
+The authorized scheduler runs every 30 minutes and requests public metrics for
+all approved submissions in live campaigns. On Vercel Hobby, GitHub Actions
+provides this external schedule because Vercel's native Hobby cron is limited
+to daily jobs. A failed or unavailable API request does not change earnings.
 
 Metrics stored:
 
