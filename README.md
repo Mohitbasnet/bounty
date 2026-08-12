@@ -63,7 +63,9 @@ npm run build
 
 - Official X credentials and a matching Developer Console redirect URI are
   required for ownership and metrics verification.
-- The local SQLite and local encrypted signer are development infrastructure.
+- The local SQLite and encrypted signer are development infrastructure. On
+  Vercel, SQLite falls back to ephemeral `/tmp` storage for demo deployment;
+  production still requires Postgres and managed custody.
 - On Vercel Hobby, settlement runs daily at 12:00 UTC and expired-campaign
   refunds run at 12:15 UTC. The repository's GitHub Actions workflow calls the
   metrics endpoint every 30 minutes; configure `FLOWEARN_URL` and `CRON_SECRET`

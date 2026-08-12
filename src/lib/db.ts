@@ -3,7 +3,11 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-const dataDir = path.join(process.cwd(), ".data");
+// Vercel functions can write only to /tmp. This fallback keeps the demo
+// deployable, but it is ephemeral and must not be used for production data.
+const dataDir = process.env.VERCEL
+  ? path.join("/tmp", "flowearn")
+  : path.join(process.cwd(), ".data");
 fs.mkdirSync(dataDir, { recursive: true });
 
 const db = new Database(path.join(dataDir, "flowearn.db"));

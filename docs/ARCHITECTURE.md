@@ -3,7 +3,7 @@
 ```text
 Next.js UI
   -> Route Handlers
-    -> SQLite repository (local V1)
+    -> SQLite repository (local/demo V1; ephemeral `/tmp` on Vercel)
     -> Official X API adapter
     -> OAuth 2.0 PKCE identity binding
     -> Solana devnet RPC
