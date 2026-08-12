@@ -1999,7 +1999,11 @@ a {
   cursor: pointer;
 }
 
-.flow-wallet-button.wallet-adapter-button {
+.header-actions .wallet-adapter-dropdown {
+  flex: 0 0 auto;
+}
+
+.header-actions .wallet-adapter-button {
   height: 42px;
   min-height: 42px;
   padding: 0 13px;
@@ -2013,7 +2017,7 @@ a {
   white-space: nowrap;
 }
 
-.flow-wallet-button.wallet-adapter-button:not([disabled]):hover {
+.header-actions .wallet-adapter-button:not([disabled]):hover {
   background: #25291d;
 }
 
