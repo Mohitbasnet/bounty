@@ -4991,6 +4991,45 @@ a {
   font-size: 13px;
   line-height: 1.65;
 }
+.live-earning-callout {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 320px;
+  border-radius: 20px;
+  background: var(--surface-strong);
+  padding: 38px;
+  color: #f2f4ec;
+}
+
+.live-earning-callout .section-kicker {
+  color: var(--lime);
+}
+
+.live-earning-callout h3 {
+  max-width: 430px;
+  margin: 16px 0 14px;
+  font-size: clamp(28px, 3vw, 42px);
+  letter-spacing: -0.055em;
+  line-height: 1.02;
+}
+
+.live-earning-callout p {
+  max-width: 480px;
+  margin: 0;
+  color: #aeb4a6;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.live-earning-callout-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 24px;
+  border-top: 1px solid #353a30;
+  padding-top: 16px;
+  color: var(--lime);
 .campaign-search-row,
 .project-toolbar {
   display: grid;
