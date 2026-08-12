@@ -41,12 +41,12 @@ const steps = [
   },
   {
     number: "03",
-    title: "Grow verified reach",
-    copy: "Official X snapshots update your provisional USDC earning throughout the tracking window.",
+    title: "Watch live earning accrue",
+    copy: "Official X impression snapshots update your provisional USDC earning throughout the tracking window.",
   },
   {
     number: "04",
-    title: "Settle on Solana",
+    title: "Settle publicly on Solana",
     copy: "Finalized earnings are batched and paid in USDC from the funded campaign treasury.",
   },
 ];
@@ -57,15 +57,15 @@ export default function Home() {
     <main className="creator-marketing-home">
       <section className="ppv-hero">
         <div className="ppv-hero-copy">
-          <span className="hero-label">Verified-view creator marketing</span>
+          <span className="hero-label">Verified-impression creator marketing</span>
           <h1>
-            Pay for the reach.
-            <span>Not just the post.</span>
+            Micro-earnings that move
+            <span>as reach moves.</span>
           </h1>
           <p>
             Companies fund USDC campaigns. X creators publish, get approved,
-            and earn as verified views grow. Final payouts settle publicly on
-            Solana devnet.
+            and see live earning accrue in small blocks as official impressions
+            are synced. Finalized USDC settles publicly on Solana devnet.
           </p>
           <div className="ppv-hero-actions">
             <Link className="primary-button focus-ring" href="/campaigns">
