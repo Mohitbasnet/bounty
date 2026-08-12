@@ -4930,6 +4930,13 @@ a {
   padding: 120px var(--page-gutter) 64px;
 }
 
+.live-earning-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+  gap: 22px;
+  margin-top: 48px;
+}
+
 .campaign-search-row,
 .project-toolbar {
   display: grid;
