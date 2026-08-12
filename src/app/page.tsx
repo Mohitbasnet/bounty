@@ -77,24 +77,23 @@ export default function Home() {
           </div>
           <p className="ppv-safety-note">
             <ShieldCheck size={15} aria-hidden />
-            No seed phrase. No payment per click. Campaign accounting stays
-            auditable.
+            Live earning feedback. Public settlement. Auditable accounting.
           </p>
         </div>
 
-        <div className="ppv-hero-board" aria-label="Example live campaign">
+        <div className="ppv-hero-board" aria-label="Illustrative live earning ledger">
           <div className="board-topline">
-            <span className="live-pill"><span aria-hidden /> Earning now</span>
-            <span>Example company · 7d</span>
+            <span className="live-pill"><span aria-hidden /> Live earning</span>
+            <span>Illustrative ledger · 7d</span>
           </div>
-          <h2>Explain a new product clearly</h2>
+          <h2>Earn as verified reach compounds.</h2>
           <div className="board-rate">
-            <span>Verified-view rate</span>
-            <strong>$2.00 <small>/ 1K views</small></strong>
+            <span>Verified impression rate</span>
+            <strong>$2.00 <small>/ 1K impressions</small></strong>
           </div>
           <div className="board-progress-copy">
-            <span>8,400 verified views</span>
-            <span>$14.80 live</span>
+            <span>8,400 verified impressions</span>
+            <span>$14.80 live earning</span>
           </div>
           <div className="board-progress" aria-hidden><span /></div>
           <div className="board-balance-grid">
