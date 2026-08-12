@@ -4956,6 +4956,19 @@ a {
   border-top: 1px solid var(--line);
 }
 
+.live-earning-step-active {
+  background: #f2f7df;
+}
+
+.live-earning-step-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--surface-strong);
+  color: var(--lime);
+}
 .campaign-search-row,
 .project-toolbar {
   display: grid;
