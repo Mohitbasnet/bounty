@@ -1948,6 +1948,7 @@ a {
 }
 
 .header-actions {
+  min-width: 0;
   justify-content: flex-end;
   gap: 8px;
 }
@@ -1975,6 +1976,7 @@ a {
 .mode-switch,
 .wallet-button {
   display: inline-flex;
+  flex: 0 0 auto;
   min-height: 42px;
   align-items: center;
   gap: 8px;
@@ -1985,6 +1987,8 @@ a {
   color: var(--ink);
   font-size: 12px;
   font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .wallet-button {
@@ -1993,6 +1997,24 @@ a {
   color: #fff;
   font-family: "JetBrains Mono", monospace;
   cursor: pointer;
+}
+
+.flow-wallet-button.wallet-adapter-button {
+  height: 42px;
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid var(--surface-strong);
+  border-radius: 12px;
+  background: var(--surface-strong);
+  color: #fff;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.flow-wallet-button.wallet-adapter-button:not([disabled]):hover {
+  background: #25291d;
 }
 
 .mobile-menu-button,
