@@ -77,7 +77,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="header-actions">
-            <WalletButton />
             <Link className="icon-button focus-ring" aria-label="Search campaigns" href="/#campaigns">
               <Search size={18} aria-hidden />
             </Link>
@@ -98,6 +97,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               )}
               {companyMode ? "Creator mode" : "Company mode"}
             </Link>
+            <WalletButton />
             {isReady && profile ? (
               <div className="profile-menu-wrap">
                 <button
